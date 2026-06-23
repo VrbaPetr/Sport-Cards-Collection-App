@@ -36,21 +36,21 @@
 
 ---
 
-### STEP-02 · Database Schema & Migrations (All 15 Entities)
+### STEP-02 · Database Schema & Migrations (All 15 Entities) ✅
 
-- [ ] Prisma schema defining all 15 entities with UUID PKs, all relations, all constraints
-- [ ] `gradeValue` + `gradingCompany` nullability rule documented as a comment (enforced in service layer later)
-- [ ] Indexes on all FK columns and slug columns
-- [ ] `DATABASE_URL` read from env only — no hardcoded connection strings
-- [ ] Migration generated and applied to local PostgreSQL
+- [x] Prisma schema defining all 15 entities with UUID PKs, all relations, all constraints
+- [x] `gradeValue` + `gradingCompany` nullability rule documented as a comment (enforced in service layer later)
+- [x] Indexes on all FK columns and slug columns
+- [x] `DATABASE_URL` read from env only — no hardcoded connection strings
+- [x] Migration generated and applied to local PostgreSQL
 
-**Entities:** User, Collection, CardDefinition, CardDefinitionPlayer, OwnedCard, CollectionCard, Player, Manufacturer, Series, Set, Year, Sport, Competition, Team, CardType
+**Entities:** User, Collection, CardDefinition, CardDefinitionPlayer, OwnedCard, CollectionCard, Player, Manufacturer, Series, Set, Year, Sport, Competition, Team, CardType (+ RefreshToken added by decision)
 
 **Acceptance:**
-- `prisma migrate dev` runs to completion
-- `prisma studio` shows all 15 tables
-- All FK relations are navigable
-- Re-running the migration command is idempotent
+- `prisma migrate dev` runs to completion ✅
+- `prisma studio` shows all 16 tables ✅
+- All FK relations are navigable ✅
+- Re-running the migration command is idempotent ✅
 
 **Tests:** Schema correctness is the acceptance criterion — no application tests yet.
 
