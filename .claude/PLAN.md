@@ -19,18 +19,18 @@
 
 ## Phase 1 — Foundation
 
-### STEP-01 · Monorepo Scaffolding & Dev Tooling
+### STEP-01 · Monorepo Scaffolding & Dev Tooling ✅
 
-- [ ] Monorepo root with pnpm workspaces (or Turborepo): `apps/web` (Next.js) and `apps/api` (NestJS)
-- [ ] TypeScript strict mode via shared `tsconfig.base.json`
-- [ ] ESLint + Prettier configured consistently across both packages
-- [ ] `.env.example` files documenting all required env vars for both apps; no secrets committed
-- [ ] Root `README.md` with instructions for starting each app
+- [x] Monorepo root with pnpm workspaces (or Turborepo): `apps/web` (Next.js) and `apps/api` (NestJS)
+- [x] TypeScript strict mode via shared `tsconfig.base.json`
+- [x] ESLint + Prettier configured consistently across both packages
+- [x] `.env.example` files documenting all required env vars for both apps; no secrets committed
+- [x] Root `README.md` with instructions for starting each app
 
 **Acceptance:**
-- `pnpm dev` starts both apps without errors
-- TypeScript compiles with zero errors in both packages
-- Linter runs clean from the root
+- `pnpm dev` starts both apps without errors ✅
+- TypeScript compiles with zero errors in both packages ✅
+- Linter runs clean from the root ✅
 
 **Tests:** No automated tests — tooling correctness verified by clean compilation and lint.
 
