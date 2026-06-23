@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+build/
+
+# Environment files — never commit real credentials
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# pnpm
+.pnpm-debug.log*
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Next.js generated files
+next-env.d.ts
