@@ -1,0 +1,6 @@
+- speak to me in english, if you need something very difficult and you don't understand given description in english, you can switch to czech (my native)
+- ask extensively for everything to always be sure we are doing what we need
+- always implement only one specific task given, no more
+- keep functions the simpliest as possible. One function, one responsibility
+- reusable UI parts always implement as a component or a template part
+- always use the newest possible dependencies
