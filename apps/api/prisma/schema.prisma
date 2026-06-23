@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  USER
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  username        String   @unique
+  role            Role     @default(USER)
+  avatarUrl       String?
+  isActive        Boolean  @default(true)
+  isEmailVerified Boolean  @default(false)
+  tokenVersion    Int      @default(0)
+  registeredAt    DateTime @default(now())
+
+  collections   Collection[]
+  ownedCards    OwnedCard[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Collections & Owned Cards
+// ---------------------------------------------------------------------------
+
+model Collection {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  slug          String
+  isSlugCustom  Boolean  @default(false)
+  coverImageUrl String?
+  isDefault     Boolean  @default(false)
+  isPublic      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionCards CollectionCard[]
+
+  @@unique([userId, slug])
+  @@index([userId])
+}
+
+model OwnedCard {
+  id               String   @id @default(uuid())
+  userId           String
+  cardDefinitionId String
+  limitation       String?
+  // gradeValue and gradingCompany must both be set or both be null.
+  // This co-nullability rule is enforced at the service layer, not the database level.
+  gradeValue       Int?
+  gradingCompany   String?
+  notes            String?
+  photoFrontUrl    String?
+  photoBackUrl     String?
+  addedAt          DateTime @default(now())
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardDefinition  CardDefinition @relation(fields: [cardDefinitionId], references: [id])
+  collectionCards CollectionCard[]
+
+  @@index([userId])
+  @@index([cardDefinitionId])
+}
+
+model CollectionCard {
+  collectionId String
+  ownedCardId  String
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  ownedCard  OwnedCard  @relation(fields: [ownedCardId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, ownedCardId])
+  @@index([collectionId])
+  @@index([ownedCardId])
+}
+
+// ---------------------------------------------------------------------------
+// Card Catalogue
+// ---------------------------------------------------------------------------
+
+model CardDefinition {
+  id            String   @id @default(uuid())
+  setId         String
+  cardNumber    String
+  name          String
+  cardTypeId    String
+  rookieFlag    Boolean  @default(false)
+  slug          String
+  isSlugCustom  Boolean  @default(false)
+  photoFrontUrl String?
+  photoBackUrl  String?
+  createdAt     DateTime @default(now())
+
+  set                   Set                    @relation(fields: [setId], references: [id])
+  cardType              CardType               @relation(fields: [cardTypeId], references: [id])
+  cardDefinitionPlayers CardDefinitionPlayer[]
+  ownedCards            OwnedCard[]
+
+  @@unique([setId, slug])
+  @@index([setId])
+  @@index([cardTypeId])
+}
+
+model CardDefinitionPlayer {
+  cardDefinitionId String
+  playerId         String
+
+  cardDefinition CardDefinition @relation(fields: [cardDefinitionId], references: [id], onDelete: Cascade)
+  player         Player         @relation(fields: [playerId], references: [id])
+
+  @@id([cardDefinitionId, playerId])
+  @@index([cardDefinitionId])
+  @@index([playerId])
+}
+
+model CardType {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  isSlugCustom Boolean  @default(false)
+  isSystem     Boolean  @default(false)
+  description  String?
+  createdAt    DateTime @default(now())
+
+  cardDefinitions CardDefinition[]
+}
+
+model Set {
+  id           String   @id @default(uuid())
+  seriesId     String
+  name         String
+  slug         String
+  isSlugCustom Boolean  @default(false)
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+
+  series          Series           @relation(fields: [seriesId], references: [id])
+  cardDefinitions CardDefinition[]
+
+  @@unique([seriesId, slug])
+  @@index([seriesId])
+}
+
+model Series {
+  id             String   @id @default(uuid())
+  name           String
+  slug           String
+  isSlugCustom   Boolean  @default(false)
+  manufacturerId String
+  sportId        String
+  yearId         String
+  competitionId  String
+  logoUrl        String?
+  createdAt      DateTime @default(now())
+
+  manufacturer Manufacturer @relation(fields: [manufacturerId], references: [id])
+  sport        Sport        @relation(fields: [sportId], references: [id])
+  year         Year         @relation(fields: [yearId], references: [id])
+  competition  Competition  @relation(fields: [competitionId], references: [id])
+  sets         Set[]
+
+  @@unique([competitionId, yearId, slug])
+  @@index([manufacturerId])
+  @@index([sportId])
+  @@index([yearId])
+  @@index([competitionId])
+}
+
+// ---------------------------------------------------------------------------
+// Reference Data
+// ---------------------------------------------------------------------------
+
+model Sport {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  isSlugCustom Boolean  @default(false)
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+
+  series       Series[]
+  competitions Competition[]
+  teams        Team[]
+  players      Player[]
+}
+
+model Competition {
+  id           String   @id @default(uuid())
+  sportId      String
+  name         String
+  slug         String   @unique
+  isSlugCustom Boolean  @default(false)
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+
+  sport  Sport    @relation(fields: [sportId], references: [id])
+  series Series[]
+  teams  Team[]
+
+  @@index([sportId])
+}
+
+model Year {
+  id           String   @id @default(uuid())
+  label        String   @unique
+  slug         String   @unique
+  isSlugCustom Boolean  @default(false)
+  startYear    Int
+  endYear      Int?
+  createdAt    DateTime @default(now())
+
+  series Series[]
+}
+
+model Manufacturer {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  isSlugCustom Boolean  @default(false)
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+
+  series Series[]
+}
+
+model Team {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  isSlugCustom  Boolean  @default(false)
+  sportId       String
+  competitionId String?
+  logoUrl       String?
+  description   String?
+  createdAt     DateTime @default(now())
+
+  sport       Sport        @relation(fields: [sportId], references: [id])
+  competition Competition? @relation(fields: [competitionId], references: [id])
+  players     Player[]
+
+  @@unique([sportId, name])
+  @@index([sportId])
+  @@index([competitionId])
+}
+
+model Player {
+  id           String    @id @default(uuid())
+  fullName     String
+  slug         String    @unique
+  isSlugCustom Boolean   @default(false)
+  sportId      String
+  nationality  String?
+  dateOfBirth  DateTime? @db.Date
+  teamId       String?
+  photoUrl     String?
+  createdAt    DateTime  @default(now())
+
+  sport                 Sport                  @relation(fields: [sportId], references: [id])
+  team                  Team?                  @relation(fields: [teamId], references: [id])
+  cardDefinitionPlayers CardDefinitionPlayer[]
+
+  @@index([sportId])
+  @@index([teamId])
+}
