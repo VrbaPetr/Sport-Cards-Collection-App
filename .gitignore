@@ -25,3 +25,6 @@ build/
 
 # Next.js generated files
 next-env.d.ts
+
+# Prisma generated client
+apps/api/src/generated/

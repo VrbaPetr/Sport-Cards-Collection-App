@@ -19,76 +19,77 @@
 
 ## Phase 1 — Foundation
 
-### STEP-01 · Monorepo Scaffolding & Dev Tooling
+### STEP-01 · Monorepo Scaffolding & Dev Tooling ✅
 
-- [ ] Monorepo root with pnpm workspaces (or Turborepo): `apps/web` (Next.js) and `apps/api` (NestJS)
-- [ ] TypeScript strict mode via shared `tsconfig.base.json`
-- [ ] ESLint + Prettier configured consistently across both packages
-- [ ] `.env.example` files documenting all required env vars for both apps; no secrets committed
-- [ ] Root `README.md` with instructions for starting each app
+- [x] Monorepo root with pnpm workspaces (or Turborepo): `apps/web` (Next.js) and `apps/api` (NestJS)
+- [x] TypeScript strict mode via shared `tsconfig.base.json`
+- [x] ESLint + Prettier configured consistently across both packages
+- [x] `.env.example` files documenting all required env vars for both apps; no secrets committed
+- [x] Root `README.md` with instructions for starting each app
 
 **Acceptance:**
-- `pnpm dev` starts both apps without errors
-- TypeScript compiles with zero errors in both packages
-- Linter runs clean from the root
+- `pnpm dev` starts both apps without errors ✅
+- TypeScript compiles with zero errors in both packages ✅
+- Linter runs clean from the root ✅
 
 **Tests:** No automated tests — tooling correctness verified by clean compilation and lint.
 
 ---
 
-### STEP-02 · Database Schema & Migrations (All 15 Entities)
+### STEP-02 · Database Schema & Migrations (All 15 Entities) ✅
 
-- [ ] Prisma schema defining all 15 entities with UUID PKs, all relations, all constraints
-- [ ] `gradeValue` + `gradingCompany` nullability rule documented as a comment (enforced in service layer later)
-- [ ] Indexes on all FK columns and slug columns
-- [ ] `DATABASE_URL` read from env only — no hardcoded connection strings
-- [ ] Migration generated and applied to local PostgreSQL
+- [x] Prisma schema defining all 15 entities with UUID PKs, all relations, all constraints
+- [x] `gradeValue` + `gradingCompany` nullability rule documented as a comment (enforced in service layer later)
+- [x] Indexes on all FK columns and slug columns
+- [x] `DATABASE_URL` read from env only — no hardcoded connection strings
+- [x] Migration generated and applied to local PostgreSQL
 
-**Entities:** User, Collection, CardDefinition, CardDefinitionPlayer, OwnedCard, CollectionCard, Player, Manufacturer, Series, Set, Year, Sport, Competition, Team, CardType
+**Entities:** User, Collection, CardDefinition, CardDefinitionPlayer, OwnedCard, CollectionCard, Player, Manufacturer, Series, Set, Year, Sport, Competition, Team, CardType (+ RefreshToken added by decision)
 
 **Acceptance:**
-- `prisma migrate dev` runs to completion
-- `prisma studio` shows all 15 tables
-- All FK relations are navigable
-- Re-running the migration command is idempotent
+- `prisma migrate dev` runs to completion ✅
+- `prisma studio` shows all 16 tables ✅
+- All FK relations are navigable ✅
+- Re-running the migration command is idempotent ✅
 
 **Tests:** Schema correctness is the acceptance criterion — no application tests yet.
 
 ---
 
-### STEP-03 · Seed Script (Admin User, Sports, CardTypes)
+### STEP-03 · Seed Script (Admin User, Sports, CardTypes) ✅
 
-- [ ] Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars with `role=ADMIN` and `isEmailVerified=true`
-- [ ] 6 Sports: Basketball, Ice Hockey, Football, Baseball, Soccer, Tennis
-- [ ] 10 CardTypes (all `isSystem=true`): Base, Rookie, Autograph, Relic, Patch, Refractor, Parallel, Insert, Memorabilia, Short Print
-- [ ] All upserts use `update: {}` — never overwrites existing admin password hash
-- [ ] Auto-generated slugs applied to all seeded records
+- [x] Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars with `role=ADMIN` and `isEmailVerified=true`
+- [x] 6 Sports: Basketball, Ice Hockey, Football, Baseball, Soccer, Tennis
+- [x] 10 CardTypes (all `isSystem=true`): Base, Rookie, Autograph, Relic, Patch, Refractor, Parallel, Insert, Memorabilia, Short Print
+- [x] All upserts use `update: {}` — never overwrites existing admin password hash
+- [x] Auto-generated slugs applied to all seeded records
 
 **Acceptance:**
-- Running the seed script twice produces identical DB state (idempotent)
-- Admin user exists with correct role and verified status
-- All sports and card types exist with correct slugs
-- No additional rows created on a second seed run
+- Running the seed script twice produces identical DB state (idempotent) ✅
+- Admin user exists with correct role and verified status ✅
+- All sports and card types exist with correct slugs ✅
+- No additional rows created on a second seed run ✅
 
-**Tests:** Smoke test — run seed twice and assert row counts do not change.
+**Tests:** Smoke test — run seed twice and assert row counts do not change. ✅
 
 ---
 
-### STEP-04 · NestJS App Bootstrap & Configuration Module
+### STEP-04 · NestJS App Bootstrap & Configuration Module ✅
 
-- [ ] NestJS entry point with global prefix `/api`
-- [ ] `ConfigModule` reading all env vars; startup fails fast with descriptive error if any required var is missing
-- [ ] Global exception filter mapping all errors to `{ error: { code, message, details } }` envelope
-- [ ] Global response interceptor wrapping successful responses in `{ data }` or `{ data, meta }`
-- [ ] `GET /api/health` returning `{ status: "ok" }`
-- [ ] CORS configured to allow the frontend origin from env
+- [x] NestJS entry point with global prefix `/api`
+- [x] `ConfigModule` reading all env vars; startup fails fast with descriptive error if any required var is missing
+- [x] Global exception filter mapping all errors to `{ error: { code, message, details } }` envelope
+- [x] Global response interceptor wrapping successful responses in `{ data }` or `{ data, meta }`
+- [x] `GET /api/health` returning `{ status: "ok" }`
+- [x] CORS configured to allow the frontend origin from env
+- [x] `PrismaModule` / `PrismaService` encapsulating driver adapter (retrospective recommendation from STEP-03)
 
 **Acceptance:**
-- `GET /api/health` returns `200 { data: { status: "ok" } }`
-- Thrown exceptions return the correct error envelope shape
-- Missing required env var → descriptive startup error
+- `GET /api/health` returns `200 { data: { status: "ok" } }` ✅
+- Thrown exceptions return the correct error envelope shape ✅
+- Missing required env var → descriptive startup error ✅
 
-**Tests:** Unit test the exception filter and response interceptor to confirm envelope shapes.
+**Tests:** Unit test the exception filter and response interceptor to confirm envelope shapes. ✅ (10/10 tests pass)
 
 ---
 
