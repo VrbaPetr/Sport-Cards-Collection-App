@@ -75,3 +75,21 @@ Three additional packages were added: `@prisma/adapter-pg`, `pg`, `@types/pg`.
 **Next time:** Any native-build dependency (`bcrypt`, `canvas`, `sharp`, etc.) needs its entry in `pnpm-workspace.yaml` `allowBuilds`, not in `package.json`.
 
 ---
+
+## STEP-06 · Next.js App Bootstrap, Tailwind CSS & next-intl
+
+### Issue 1: `nest start --watch` fails with "Cannot find module dist/main" on first run
+
+**What happened:** Running `pnpm dev` (which starts both `apps/api` and `apps/web` concurrently) caused the API to crash immediately with `Error: Cannot find module '.../dist/main'`. TypeScript reported `Found 0 errors` but produced no output files.
+
+**Root cause:** Two settings interacted badly:
+1. `nest-cli.json` has `"deleteOutDir": true` — wipes `dist/` before every build.
+2. `tsconfig.json` has `"incremental": true` — tsc stores a `.tsbuildinfo` cache file (`tsconfig.build.tsbuildinfo`) alongside the source.
+
+When nest deletes `dist/` and re-runs the compiler, tsc's incremental mode consults `.tsbuildinfo`, sees that no source files changed, and **skips emitting entirely**. `dist/main.js` is never written, so `node dist/main` throws immediately.
+
+**Fix applied:** Added `"incremental": false` to `tsconfig.build.json` (which overrides the base `tsconfig.json`). The build config now always does a full emit. The root `tsconfig.json` still has `"incremental": true` so the `typecheck` (`tsc --noEmit`) command remains fast.
+
+**Next time:** `deleteOutDir: true` and `incremental: true` are mutually incompatible — the cache always wins over the missing output dir. Whenever `deleteOutDir` is enabled in `nest-cli.json`, the build tsconfig must set `"incremental": false`.
+
+---
