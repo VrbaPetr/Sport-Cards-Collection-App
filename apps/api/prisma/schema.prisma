@@ -32,6 +32,9 @@ model User {
   tokenVersion    Int      @default(0)
   registeredAt    DateTime @default(now())
 
+  emailVerificationToken          String?   @unique
+  emailVerificationTokenExpiresAt DateTime?
+
   collections   Collection[]
   ownedCards    OwnedCard[]
   refreshTokens RefreshToken[]

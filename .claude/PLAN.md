@@ -129,14 +129,14 @@
 
 ## Phase 2 — Backend Core
 
-### STEP-07 · Auth — Register, Email Verification, Login, Logout
+### STEP-07 · Auth — Register, Email Verification, Login, Logout ✅
 
-- [ ] `POST /api/auth/register` — creates user, hashes password with bcrypt, sends verification email via Resend, creates default "All" collection (`isDefault=true`, non-deletable, non-renameable)
-- [ ] `POST /api/auth/verify-email` — marks `isEmailVerified=true`, invalidates the verification token
-- [ ] `POST /api/auth/resend-verification` — rate-limited; resends verification email
-- [ ] `POST /api/auth/login` — validates credentials, returns access token (15-min JWT: `{ userId, tokenVersion, role }`) in response body, sets refresh token (30-day opaque, stored in `RefreshToken` DB table) as HttpOnly Secure SameSite=Lax cookie
-- [ ] `POST /api/auth/logout` — deletes the RefreshToken row and clears the cookie
-- [ ] Guard on all write endpoints returning `403 EMAIL_NOT_VERIFIED` for unverified users
+- [x] `POST /api/auth/register` — creates user, hashes password with bcrypt, sends verification email via Resend, creates default "All" collection (`isDefault=true`, non-deletable, non-renameable)
+- [x] `POST /api/auth/verify-email` — marks `isEmailVerified=true`, invalidates the verification token
+- [x] `POST /api/auth/resend-verification` — rate-limited; resends verification email
+- [x] `POST /api/auth/login` — validates credentials, returns access token (15-min JWT: `{ userId, tokenVersion, role }`) in response body, sets refresh token (30-day opaque, stored in `RefreshToken` DB table) as HttpOnly Secure SameSite=Lax cookie
+- [x] `POST /api/auth/logout` — deletes the RefreshToken row and clears the cookie
+- [x] Guard on all write endpoints returning `403 EMAIL_NOT_VERIFIED` for unverified users
 
 **Acceptance:**
 - Registering creates a user with `isEmailVerified=false` and a default "All" collection
@@ -146,7 +146,7 @@
 - Wrong credentials → 401
 - Write op as unverified user → `403 EMAIL_NOT_VERIFIED`
 
-**Tests:** Integration tests for each endpoint including the 403 guard for unverified users.
+**Tests:** 25 tests pass (14 service unit tests, 9 controller integration tests, 2 EmailVerifiedGuard unit tests) ✅
 
 ---
 

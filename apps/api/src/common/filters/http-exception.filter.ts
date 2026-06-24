@@ -35,16 +35,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const record = body as Record<string, unknown>;
     const rawMessage = record['message'];
+    const resolvedCode = typeof record['code'] === 'string' ? record['code'] : code;
 
     if (Array.isArray(rawMessage)) {
-      return { error: { code, message: 'Validation failed', details: rawMessage } };
+      return { error: { code: resolvedCode, message: 'Validation failed', details: rawMessage } };
     }
 
     const message = typeof rawMessage === 'string' ? rawMessage : fallbackMessage;
     const details = record['details'];
 
     return details !== undefined
-      ? { error: { code, message, details } }
-      : { error: { code, message } };
+      ? { error: { code: resolvedCode, message, details } }
+      : { error: { code: resolvedCode, message } };
   }
 }
