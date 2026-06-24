@@ -56,21 +56,21 @@
 
 ---
 
-### STEP-03 · Seed Script (Admin User, Sports, CardTypes)
+### STEP-03 · Seed Script (Admin User, Sports, CardTypes) ✅
 
-- [ ] Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars with `role=ADMIN` and `isEmailVerified=true`
-- [ ] 6 Sports: Basketball, Ice Hockey, Football, Baseball, Soccer, Tennis
-- [ ] 10 CardTypes (all `isSystem=true`): Base, Rookie, Autograph, Relic, Patch, Refractor, Parallel, Insert, Memorabilia, Short Print
-- [ ] All upserts use `update: {}` — never overwrites existing admin password hash
-- [ ] Auto-generated slugs applied to all seeded records
+- [x] Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars with `role=ADMIN` and `isEmailVerified=true`
+- [x] 6 Sports: Basketball, Ice Hockey, Football, Baseball, Soccer, Tennis
+- [x] 10 CardTypes (all `isSystem=true`): Base, Rookie, Autograph, Relic, Patch, Refractor, Parallel, Insert, Memorabilia, Short Print
+- [x] All upserts use `update: {}` — never overwrites existing admin password hash
+- [x] Auto-generated slugs applied to all seeded records
 
 **Acceptance:**
-- Running the seed script twice produces identical DB state (idempotent)
-- Admin user exists with correct role and verified status
-- All sports and card types exist with correct slugs
-- No additional rows created on a second seed run
+- Running the seed script twice produces identical DB state (idempotent) ✅
+- Admin user exists with correct role and verified status ✅
+- All sports and card types exist with correct slugs ✅
+- No additional rows created on a second seed run ✅
 
-**Tests:** Smoke test — run seed twice and assert row counts do not change.
+**Tests:** Smoke test — run seed twice and assert row counts do not change. ✅
 
 ---
 
