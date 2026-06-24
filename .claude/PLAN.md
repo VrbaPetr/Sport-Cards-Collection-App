@@ -93,10 +93,10 @@
 
 ---
 
-### STEP-05 · Slug Utility
+### STEP-05 · Slug Utility ✅
 
-- [ ] Shared utility (usable by NestJS service layer): lowercase, spaces/underscores → hyphens, non-ASCII characters transliterated to ASCII equivalents, result filtered to `[a-z0-9-]` only, leading/trailing hyphens stripped, consecutive hyphens collapsed
-- [ ] Conflict resolution logic: given a candidate slug + a lookup function, appends `-2`, `-3`, … until unique (silent suffix for auto-generated; caller surfaces conflict for manually set slugs)
+- [x] Shared utility (usable by NestJS service layer): lowercase, spaces/underscores → hyphens, non-ASCII characters transliterated to ASCII equivalents, result filtered to `[a-z0-9-]` only, leading/trailing hyphens stripped, consecutive hyphens collapsed
+- [x] Conflict resolution logic: given a candidate slug + a lookup function, appends `-2`, `-3`, … until unique (silent suffix for auto-generated; caller surfaces conflict for manually set slugs)
 
 **Acceptance:**
 - `"Michael Jordan"` → `michael-jordan`
