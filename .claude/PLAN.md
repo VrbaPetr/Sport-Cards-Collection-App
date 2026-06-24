@@ -108,14 +108,14 @@
 
 ---
 
-### STEP-06 · Next.js App Bootstrap, Tailwind CSS & next-intl
+### STEP-06 · Next.js App Bootstrap, Tailwind CSS & next-intl ✅
 
-- [ ] Next.js App Router project with TypeScript strict mode
-- [ ] Tailwind CSS configured with a base design token set
-- [ ] next-intl configured with `en.json` and `cs.json`; cs may mirror en for v1 but both files must always have identical keys
-- [ ] Root layout rendering the locale provider
-- [ ] Minimal home page (`/`) rendering a translated heading to confirm i18n is wired
-- [ ] `NEXT_PUBLIC_API_URL` consumed by a centralised API client module
+- [x] Next.js App Router project with TypeScript strict mode
+- [x] Tailwind CSS configured with a base design token set
+- [x] next-intl configured with `en.json` and `cs.json`; cs may mirror en for v1 but both files must always have identical keys
+- [x] Root layout rendering the locale provider
+- [x] Minimal home page (`/`) rendering a translated heading to confirm i18n is wired
+- [x] `NEXT_PUBLIC_API_URL` consumed by a centralised API client module
 
 **Acceptance:**
 - App starts and renders the home page with a translated string
