@@ -93,3 +93,37 @@ When nest deletes `dist/` and re-runs the compiler, tsc's incremental mode consu
 **Next time:** `deleteOutDir: true` and `incremental: true` are mutually incompatible — the cache always wins over the missing output dir. Whenever `deleteOutDir` is enabled in `nest-cli.json`, the build tsconfig must set `"incremental": false`.
 
 ---
+
+## STEP-08 · Auth — Token Refresh & Password Reset
+
+### Issue 1: `prisma migrate dev` requires an interactive TTY
+
+**What happened:** Running `prisma migrate dev` to apply the new `passwordResetToken` columns failed with `Prisma Migrate has detected that the environment is non-interactive, exiting` because the Claude Code environment has no TTY attached.
+
+**Impact:** Could not use the standard development workflow for applying schema changes.
+
+**Fix applied:** Wrote the migration SQL manually under `prisma/migrations/20260625000000_add_password_reset_token/migration.sql` and applied it with `prisma migrate deploy`, which is non-interactive and designed for CI/production use.
+
+**Next time:** When running inside a non-interactive shell (CI, Claude Code, Docker without `-it`), always use `prisma migrate deploy` for applying existing migrations. For new migrations, write the SQL file manually and let `migrate deploy` pick it up — or generate the file on a local dev machine with a TTY first and commit it.
+
+---
+
+### Issue 2: TypeScript strict mode requires `!` on DTO properties
+
+**What happened:** New DTO classes (`ForgotPasswordDto`, `ResetPasswordDto`) used plain property declarations (`email: string`) which caused `TS2564: Property has no initializer and is not definitely assigned in the constructor`.
+
+**Fix applied:** Added the definite assignment assertion (`email!: string`) to all DTO properties — consistent with the pattern already used in all prior DTOs in the project.
+
+**Next time:** All DTO properties decorated with `class-validator` decorators must use `!` (definite assignment assertion). TypeScript strict mode flags the missing initializer because NestJS/class-validator assigns them at runtime via the validation pipe, which the compiler cannot see.
+
+---
+
+## STEP-09 · User Profile API & Settings
+
+### Issue 1: User model uses `registeredAt`, not `createdAt`
+
+**What happened:** The `User` model in `schema.prisma` uses `registeredAt DateTime @default(now())` instead of the conventional `createdAt`. Writing `select: { createdAt: true }` in `UsersService` caused `TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'UserSelect'`.
+
+**Impact:** Caught on first test run; required a quick find-and-replace across the service and spec files.
+
+**Next time:** Any future step that selects or exposes the user's registration timestamp must use `registeredAt`. This affects STEP-23 (user management), STEP-28 (dashboard stats), and any public profile endpoint that shows a "member since" date.

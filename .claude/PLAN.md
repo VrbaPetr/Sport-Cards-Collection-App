@@ -166,13 +166,13 @@
 
 ---
 
-### STEP-09 · User Profile API & Settings
+### STEP-09 · User Profile API & Settings ✅
 
-- [ ] `GET /api/users/:username` — public profile; returns 404 if user is deactivated or does not exist
-- [ ] `GET /api/users/me` — full profile for the authenticated user
-- [ ] `PATCH /api/users/me` — updates `avatarUrl` only; username is immutable after registration
-- [ ] `POST /api/upload/presign` — returns pre-signed S3/R2 URL for avatar upload (max 5MB, MIME types: jpeg/png/webp); enforces constraints via S3/R2 policy conditions
-- [ ] Reserved usernames enforced server-side at registration: `admin`, `api`, `profile`, `login`, `logout`, `register`, `forgot-password`, `reset-password`, `dashboard`, `collection`, `cards`, `settings`, `health`, `manufacturer`, `team`, `player`, `year`, `sport`, `static`, `_next`, `favicon`
+- [x] `GET /api/users/:username` — public profile; returns 404 if user is deactivated or does not exist
+- [x] `GET /api/users/me` — full profile for the authenticated user
+- [x] `PATCH /api/users/me` — updates `avatarUrl` only; username is immutable after registration
+- [x] `POST /api/upload/presign` — returns pre-signed S3/R2 URL for avatar upload (max 5MB, MIME types: jpeg/png/webp); enforces constraints via S3/R2 policy conditions
+- [x] Reserved usernames enforced server-side at registration: `admin`, `api`, `profile`, `login`, `logout`, `register`, `forgot-password`, `reset-password`, `dashboard`, `collection`, `cards`, `settings`, `health`, `manufacturer`, `team`, `player`, `year`, `sport`, `static`, `_next`, `favicon`
 
 **Acceptance:**
 - Active user profile returns correct data
@@ -180,7 +180,7 @@
 - Username cannot be changed via PATCH
 - Pre-signed URL returned and restricted to allowed MIME types and size
 
-**Tests:** Unit test the reserved-username guard; integration test for the deactivation 404 rule.
+**Tests:** 85 tests pass (7 UsersService unit, 8 UsersController integration, 2 UploadService unit, 3 UploadController integration + all prior 65) ✅
 
 ---
 
