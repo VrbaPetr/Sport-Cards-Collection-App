@@ -35,6 +35,9 @@ model User {
   emailVerificationToken          String?   @unique
   emailVerificationTokenExpiresAt DateTime?
 
+  passwordResetToken          String?   @unique
+  passwordResetTokenExpiresAt DateTime?
+
   collections   Collection[]
   ownedCards    OwnedCard[]
   refreshTokens RefreshToken[]

@@ -23,4 +23,14 @@ export class EmailService {
       html: `<p>Click <a href="${link}">here</a> to verify your email address. This link expires in 24 hours.</p>`,
     });
   }
+
+  async sendPasswordResetEmail(to: string, token: string): Promise<void> {
+    const link = `${this.frontendUrl}/reset-password?token=${token}`;
+    await this.resend.emails.send({
+      from: this.from,
+      to,
+      subject: 'Reset your password',
+      html: `<p>Click <a href="${link}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+    });
+  }
 }

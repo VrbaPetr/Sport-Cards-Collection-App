@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
@@ -19,7 +19,9 @@ const mockPrisma = {
   },
   refreshToken: {
     create: jest.fn(),
+    delete: jest.fn(),
     deleteMany: jest.fn(),
+    findFirst: jest.fn(),
   },
   $transaction: jest.fn(),
 };
@@ -31,6 +33,7 @@ const mockJwt = {
 
 const mockEmail = {
   sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+  sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockConfig = {
@@ -236,6 +239,103 @@ describe('AuthService', () => {
 
       expect(mockPrisma.refreshToken.deleteMany).not.toHaveBeenCalled();
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('refresh_token', expect.any(Object));
+    });
+  });
+
+  describe('refresh', () => {
+    const mockResponse = {
+      cookie: jest.fn(),
+    } as unknown as import('express').Response;
+
+    it('throws UnauthorizedException when no cookie is present', async () => {
+      const mockRequest = { cookies: {} } as unknown as import('express').Request;
+
+      await expect(service.refresh(mockRequest, mockResponse)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when refresh token is not found in DB', async () => {
+      const mockRequest = { cookies: { refresh_token: 'unknown-token' } } as unknown as import('express').Request;
+      mockPrisma.refreshToken.findFirst.mockResolvedValue(null);
+
+      await expect(service.refresh(mockRequest, mockResponse)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('throws UnauthorizedException when user is inactive', async () => {
+      const mockRequest = { cookies: { refresh_token: 'valid-token' } } as unknown as import('express').Request;
+      mockPrisma.refreshToken.findFirst.mockResolvedValue({ id: 'rt-id', userId: 'user-id' });
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.refresh(mockRequest, mockResponse)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rotates refresh token and returns new access token', async () => {
+      const mockRequest = { cookies: { refresh_token: 'valid-token' } } as unknown as import('express').Request;
+      mockPrisma.refreshToken.findFirst.mockResolvedValue({ id: 'rt-id', userId: 'user-id' });
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'user-id', role: 'USER', tokenVersion: 1 });
+      mockPrisma.$transaction.mockResolvedValue([{}, {}]);
+
+      const result = await service.refresh(mockRequest, mockResponse);
+
+      expect(result.accessToken).toBe('mock.jwt.token');
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockResponse.cookie).toHaveBeenCalledWith('refresh_token', expect.any(String), expect.any(Object));
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('returns generic message when email is not found (no enumeration)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.forgotPassword('unknown@example.com');
+
+      expect(result.message).toBeDefined();
+      expect(mockEmail.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('saves reset token and sends email for existing user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-id' });
+      mockPrisma.user.update.mockResolvedValue({});
+
+      await service.forgotPassword('user@example.com');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            passwordResetToken: expect.any(String),
+            passwordResetTokenExpiresAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(mockEmail.sendPasswordResetEmail).toHaveBeenCalledWith('user@example.com', expect.any(String));
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('throws BadRequestException for invalid or expired token', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.resetPassword('bad-token', 'newpassword')).rejects.toThrow(BadRequestException);
+    });
+
+    it('updates passwordHash, increments tokenVersion, deletes all refresh tokens', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'user-id' });
+      mockPrisma.$transaction.mockResolvedValue([{}, {}]);
+
+      const result = await service.resetPassword('valid-token', 'newpassword123');
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.message).toBeDefined();
+    });
+
+    it('throws BadRequestException when same token is used a second time', async () => {
+      mockPrisma.user.findFirst
+        .mockResolvedValueOnce({ id: 'user-id' })
+        .mockResolvedValueOnce(null);
+      mockPrisma.$transaction.mockResolvedValue([{}, {}]);
+
+      await service.resetPassword('valid-token', 'newpassword123');
+
+      await expect(service.resetPassword('valid-token', 'newpassword123')).rejects.toThrow(BadRequestException);
     });
   });
 });

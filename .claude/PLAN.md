@@ -150,11 +150,11 @@
 
 ---
 
-### STEP-08 · Auth — Token Refresh & Password Reset
+### STEP-08 · Auth — Token Refresh & Password Reset ✅
 
-- [ ] `POST /api/auth/refresh` — reads HttpOnly cookie, validates opaque token against DB, checks `tokenVersion` matches JWT, issues a new access token
-- [ ] `POST /api/auth/forgot-password` — sends time-limited password reset link via Resend; always returns 200 regardless of whether email exists (prevents enumeration)
-- [ ] `POST /api/auth/reset-password` — validates reset token, updates `passwordHash`, increments `tokenVersion` (invalidates all existing sessions), deletes all RefreshToken rows for the user
+- [x] `POST /api/auth/refresh` — reads HttpOnly cookie, validates opaque token against DB, checks `tokenVersion` matches JWT, issues a new access token
+- [x] `POST /api/auth/forgot-password` — sends time-limited password reset link via Resend; always returns 200 regardless of whether email exists (prevents enumeration)
+- [x] `POST /api/auth/reset-password` — validates reset token, updates `passwordHash`, increments `tokenVersion` (invalidates all existing sessions), deletes all RefreshToken rows for the user
 
 **Acceptance:**
 - Valid cookie issues a new access token
@@ -162,7 +162,7 @@
 - Password reset email sent; link resets password and invalidates previous tokens
 - Using the same reset link twice → 400/422
 
-**Tests:** Integration tests for token rotation, tokenVersion invalidation, and double-use of reset link.
+**Tests:** 42 tests pass (19 service unit tests, 13 controller integration tests, 2 EmailVerifiedGuard unit tests) ✅
 
 ---
 

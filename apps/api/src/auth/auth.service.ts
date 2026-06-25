@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +13,8 @@ const BCRYPT_ROUNDS = 10;
 const REFRESH_TOKEN_BYTES = 32;
 const VERIFICATION_TOKEN_BYTES = 32;
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const RESET_TOKEN_BYTES = 32;
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -166,6 +168,113 @@ export class AuthService {
     res.clearCookie('refresh_token', { path: '/api/auth' });
 
     return { message: 'Logged out successfully.' };
+  }
+
+  async refresh(req: import('express').Request, res: import('express').Response): Promise<{ accessToken: string }> {
+    const rawToken: string | undefined = req.cookies?.['refresh_token'];
+    if (!rawToken) throw new UnauthorizedException('Missing refresh token');
+
+    const tokenHash = this.hashToken(rawToken);
+
+    const existing = await this.prisma.refreshToken.findFirst({
+      where: { tokenHash, expiresAt: { gt: new Date() } },
+      select: { id: true, userId: true },
+    });
+
+    if (!existing) throw new UnauthorizedException('Invalid or expired refresh token');
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: existing.userId, isActive: true },
+      select: { id: true, role: true, tokenVersion: true },
+    });
+
+    if (!user) throw new UnauthorizedException('User not found or inactive');
+
+    const rawNewToken = crypto.randomBytes(REFRESH_TOKEN_BYTES).toString('hex');
+    const newTokenHash = this.hashToken(rawNewToken);
+    const refreshExpiresInMs = this.parseExpiry(this.config.getOrThrow('JWT_REFRESH_EXPIRES_IN'));
+
+    await this.prisma.$transaction([
+      this.prisma.refreshToken.delete({ where: { id: existing.id } }),
+      this.prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          tokenHash: newTokenHash,
+          expiresAt: new Date(Date.now() + refreshExpiresInMs),
+        },
+      }),
+    ]);
+
+    const accessToken = this.jwt.sign(
+      { sub: user.id, tokenVersion: user.tokenVersion, role: user.role } satisfies JwtPayload,
+    );
+
+    res.cookie('refresh_token', rawNewToken, {
+      httpOnly: true,
+      secure: this.config.get('NODE_ENV') !== 'development',
+      sameSite: 'lax',
+      maxAge: refreshExpiresInMs,
+      path: '/api/auth',
+    });
+
+    return { accessToken };
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const genericResponse = { message: 'If that email is registered, a password reset link has been sent.' };
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (!user) return genericResponse;
+
+    const rawToken = crypto.randomBytes(RESET_TOKEN_BYTES).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: tokenHash,
+        passwordResetTokenExpiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+      },
+    });
+
+    await this.email.sendPasswordResetEmail(email, rawToken);
+
+    return genericResponse;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const tokenHash = this.hashToken(token);
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: tokenHash,
+        passwordResetTokenExpiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+
+    if (!user) throw new BadRequestException({ code: 'INVALID_TOKEN', message: 'Password reset token is invalid or has expired' });
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash,
+          passwordResetToken: null,
+          passwordResetTokenExpiresAt: null,
+          tokenVersion: { increment: 1 },
+        },
+      }),
+      this.prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
+    ]);
+
+    return { message: 'Password has been reset successfully.' };
   }
 
   private hashToken(raw: string): string {

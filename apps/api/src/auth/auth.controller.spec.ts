@@ -15,6 +15,9 @@ const mockAuthService = {
   resendVerification: jest.fn(),
   login: jest.fn(),
   logout: jest.fn(),
+  refresh: jest.fn(),
+  forgotPassword: jest.fn(),
+  resetPassword: jest.fn(),
 };
 
 describe('AuthController (integration)', () => {
@@ -139,6 +142,97 @@ describe('AuthController (integration)', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
+    });
+  });
+
+  describe('POST /auth/refresh', () => {
+    it('returns 200 with new accessToken on valid cookie', async () => {
+      mockAuthService.refresh.mockResolvedValue({ accessToken: 'new.jwt.token' });
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', 'refresh_token=some-valid-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.accessToken).toBeDefined();
+    });
+
+    it('returns 401 when refresh token is invalid', async () => {
+      const { UnauthorizedException } = await import('@nestjs/common');
+      mockAuthService.refresh.mockRejectedValue(
+        new UnauthorizedException('Invalid or expired refresh token'),
+      );
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh');
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('POST /auth/forgot-password', () => {
+    it('returns 200 with generic message regardless of email existence', async () => {
+      mockAuthService.forgotPassword.mockResolvedValue({
+        message: 'If that email is registered, a password reset link has been sent.',
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: 'anyone@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.message).toBeDefined();
+    });
+
+    it('returns 400 for invalid email format', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/forgot-password')
+        .send({ email: 'not-an-email' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('POST /auth/reset-password', () => {
+    it('returns 200 on successful password reset', async () => {
+      mockAuthService.resetPassword.mockResolvedValue({ message: 'Password has been reset successfully.' });
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({ token: 'valid-token', newPassword: 'newpassword123' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.message).toBeDefined();
+    });
+
+    it('returns 400 with INVALID_TOKEN when token is expired or already used', async () => {
+      const { BadRequestException } = await import('@nestjs/common');
+      mockAuthService.resetPassword.mockRejectedValue(
+        new BadRequestException({ code: 'INVALID_TOKEN', message: 'Password reset token is invalid or has expired' }),
+      );
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({ token: 'used-token', newPassword: 'newpassword123' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('INVALID_TOKEN');
+    });
+
+    it('returns 400 when newPassword is shorter than 8 characters', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({ token: 'some-token', newPassword: 'short' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when token field is missing', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/reset-password')
+        .send({ newPassword: 'newpassword123' });
+
+      expect(res.status).toBe(400);
     });
   });
 
